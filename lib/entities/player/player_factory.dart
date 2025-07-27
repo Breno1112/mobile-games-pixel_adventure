@@ -43,8 +43,8 @@ class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameRefe
   final String spriteBaseName;
 
   Vector2 velocity = Vector2.zero();
-  final gravity = 500;
-  final double maxFallSpeed = 300;
+  final gravity = 800;
+  final double maxFallSpeed = 200;
 
   bool canFall = true;
 
@@ -125,12 +125,21 @@ class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameRefe
   @override
   void update(double dt) {
     super.update(dt);
-    if (canFall) {
-      velocity.y += gravity* dt;
-      if (velocity.y > maxFallSpeed) {
-        velocity.y = maxFallSpeed;
-      }
-      position += velocity * dt;      
+    _applyGravity(dt);
+    _applyMovement(dt);
+  }
+
+  void _applyGravity(double dt) {
+    if (!canFall) return;
+
+    velocity.y += gravity * dt;
+
+    if (velocity.y > maxFallSpeed) {
+      velocity.y = maxFallSpeed;
     }
+  }
+
+  void _applyMovement(double dt) {
+    position += velocity * dt;
   }
 }
