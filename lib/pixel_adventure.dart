@@ -5,13 +5,16 @@ import 'package:pixel_adventure/worlds/world_factory.dart';
 
 class PixelAdventureGame extends FlameGame {
 
-  PixelAdventureGame() {
-    world = WorldFactory().getWorld();
-    camera = CameraComponent.withFixedResolution(width: 240, height: 160);
-  }
+  PixelAdventureGame();
 
   @override
   FutureOr<void> onLoad() async {
+    world = WorldFactory().getWorld();
+    camera = CameraComponent(
+      world: world
+    );
+    camera.viewfinder.anchor = Anchor.topLeft;
+    await add(camera);
     await add(world);
     return super.onLoad();
   }

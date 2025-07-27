@@ -12,10 +12,13 @@ class DefaultWorld extends World with HasGameReference<PixelAdventureGame> {
 
   DefaultWorld(this._levelFile);
 
+  Player? _player;
+
   @override
   Future<void> onLoad() async {
     await _loadWorld();
     await _spawnObjects();
+    await _postSetUpCamera();
   }
 
   Future<void> _loadWorld() async {
@@ -24,12 +27,11 @@ class DefaultWorld extends World with HasGameReference<PixelAdventureGame> {
   }
 
   Future<void> _spawnObjects() async {
-    late Player player;
     _map.tileMap.getLayer<ObjectGroup>('Entities')?.objects.forEach((obj) {
       switch(obj.class_) {
         case 'Player':
-          player = Player(position: obj.position);
-          add(player);
+          _player = Player(position: obj.position);
+          add(_player!);
           break;
         case 'Block':
           add(BlockComponent(position: obj.position));
@@ -37,7 +39,11 @@ class DefaultWorld extends World with HasGameReference<PixelAdventureGame> {
           break;
       }
     });
-    game.camera.follow(player);
-    
+  }
+  
+  Future<void> _postSetUpCamera() async {
+    if (_player != null) {
+      game.camera.viewfinder.anchor = _player!.anchor;
+    }
   }
 }
