@@ -47,9 +47,15 @@ class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameRefe
   Future<void> onLoad() async {
 
     animations = <PlayerState, SpriteAnimation>{
-      PlayerState.Idle: await createAnimation('main_characters/mask_dude/Idle (32x32).png', 11, 0.1, Vector2(32, 32)),
+      PlayerState.doubleJump: await createAnimation('main_characters/$spriteBaseName/Double Jump (32x32).png', 11, 0.1, Vector2(32, 32)),
+      PlayerState.fall: await createAnimation('main_characters/$spriteBaseName/Fall (32x32).png', 11, 0.1, Vector2(32, 32)),
+      PlayerState.hit: await createAnimation('main_characters/$spriteBaseName/Hit (32x32).png', 11, 0.1, Vector2(32, 32)),
+      PlayerState.idle: await createAnimation('main_characters/$spriteBaseName/Idle (32x32).png', 11, 0.1, Vector2(32, 32)),
+      PlayerState.jump: await createAnimation('main_characters/$spriteBaseName/Jump (32x32).png', 11, 0.1, Vector2(32, 32)),
+      PlayerState.run: await createAnimation('main_characters/$spriteBaseName/Run (32x32).png', 11, 0.1, Vector2(32, 32)),
+      PlayerState.wallJump: await createAnimation('main_characters/$spriteBaseName/Wall Jump (32x32).png', 11, 0.1, Vector2(32, 32)),
     };
-    current = PlayerState.Idle;
+    current = PlayerState.idle;
   }
 
   Future<SpriteAnimation> createAnimation(String path, int count, double stepTime, Vector2 size) async {
@@ -62,7 +68,6 @@ class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameRefe
         textureSize: size, // size of each frame
       ),
     );
-
     return animation;
   }
 }

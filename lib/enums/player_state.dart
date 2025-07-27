@@ -1,4 +1,10 @@
 enum PlayerState {
 
-  Idle
+  doubleJump,
+  fall,
+  hit,
+  idle,
+  jump,
+  run,
+  wallJump
 }
