@@ -1,5 +1,8 @@
+// ignore_for_file: implementation_imports
+
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:flutter/src/services/hardware_keyboard.dart';
 import 'package:pixel_adventure/enums/player_state.dart';
 import 'package:pixel_adventure/pixel_adventure.dart';
 import 'package:pixel_adventure/settings/game_settings.dart';
@@ -36,15 +39,20 @@ class PlayerFactory {
   }
 }
 
-class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameReference<PixelAdventureGame>, CollisionCallbacks {
+class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameReference<PixelAdventureGame>, CollisionCallbacks, KeyboardHandler {
 
   final String spriteBaseName;
 
   Vector2 velocity = Vector2.zero();
+
+
   final gravity = 800;
   final double maxFallSpeed = 150;
-
   bool canFall = true;
+
+  final normalMoveSpeed = 50;
+  final runMoveSpeed = 100;
+  final dragHorizontalSpeed = 35;
 
   Player({super.position, required this.spriteBaseName}) :
     super(size: Vector2.all(32), anchor: Anchor.topLeft);
@@ -129,5 +137,28 @@ class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameRefe
 
   void _applyMovement(double dt) {
     position += velocity * dt;
+  }
+
+  @override
+  bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
+    if (event is KeyDownEvent) {
+      if (keysPressed.contains(LogicalKeyboardKey.arrowLeft) ||
+        keysPressed.contains(LogicalKeyboardKey.keyD)) {
+          _moveHorizontally(1, keysPressed.contains(LogicalKeyboardKey.shiftLeft));
+      } else if (keysPressed.contains(LogicalKeyboardKey.arrowRight) ||
+        keysPressed.contains(LogicalKeyboardKey.keyA)) {
+          _moveHorizontally(-1, keysPressed.contains(LogicalKeyboardKey.shiftLeft));
+      }
+    }
+
+    return super.onKeyEvent(event, keysPressed);
+  }
+  
+  void _moveHorizontally(int i, bool running) {
+    if (running) {
+      velocity.x = runMoveSpeed * i.toDouble();
+    } else {
+      velocity.x = normalMoveSpeed * i.toDouble();
+    }
   }
 }

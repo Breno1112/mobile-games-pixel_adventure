@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'package:flame/components.dart';
+import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:pixel_adventure/worlds/world_factory.dart';
 
-class PixelAdventureGame extends FlameGame {
+class PixelAdventureGame extends FlameGame with HasKeyboardHandlerComponents {
 
   PixelAdventureGame();
 
