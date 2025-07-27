@@ -1,6 +1,6 @@
 import 'package:flame/components.dart';
 import 'package:flame_tiled/flame_tiled.dart';
-import 'package:pixel_adventure/entities/player.dart';
+import 'package:pixel_adventure/entities/player/player_factory.dart';
 import 'package:pixel_adventure/pixel_adventure.dart';
 import 'package:pixel_adventure/terrain/block_component.dart';
 
@@ -30,7 +30,7 @@ class DefaultWorld extends World with HasGameReference<PixelAdventureGame> {
     _map.tileMap.getLayer<ObjectGroup>('Entities')?.objects.forEach((obj) {
       switch(obj.class_) {
         case 'Player':
-          _player = Player(position: obj.position);
+          _player = PlayerFactory().newPlayerOnPosition(obj.position);
           add(_player!);
           break;
         case 'Block':

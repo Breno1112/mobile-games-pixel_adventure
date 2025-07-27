@@ -1,12 +1,46 @@
 import 'package:flame/components.dart';
-// ignore: unused_import
-import 'package:flame/geometry.dart';
 import 'package:pixel_adventure/enums/player_state.dart';
 import 'package:pixel_adventure/pixel_adventure.dart';
+import 'package:pixel_adventure/settings/game_settings.dart';
 
+class PlayerFactory {
+
+  PlayerFactory._();
+
+  static final PlayerFactory _instance = PlayerFactory._();
+
+  Player? _currentPlayer;
+
+  factory PlayerFactory() {
+    return _instance;
+  }
+
+  Player getCurrentPlayer() {
+    _currentPlayer ??= constructNewPlayer();
+    return _currentPlayer!;
+  }
+
+  Player constructNewPlayer() {
+    _currentPlayer = Player(spriteBaseName: GameSettings().playerSettings.playerAppearence.playerSpriteName);
+    return _currentPlayer!;
+  }
+
+  Player newPlayerOnPosition(Vector2 position) {
+    _currentPlayer = Player(
+      spriteBaseName: GameSettings().playerSettings.playerAppearence.playerSpriteName,
+      position: position
+      );
+    return _currentPlayer!;
+
+  }
+
+}
 
 class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameReference<PixelAdventureGame> {
-  Player({super.position}) :
+
+  final String spriteBaseName;
+
+  Player({super.position, required this.spriteBaseName}) :
     super(size: Vector2.all(32), anchor: Anchor.topLeft);
 
   @override
