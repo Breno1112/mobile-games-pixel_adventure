@@ -33,9 +33,7 @@ class PlayerFactory {
       position: position
       );
     return _currentPlayer!;
-
   }
-
 }
 
 class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameReference<PixelAdventureGame>, CollisionCallbacks {
@@ -44,7 +42,7 @@ class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameRefe
 
   Vector2 velocity = Vector2.zero();
   final gravity = 800;
-  final double maxFallSpeed = 200;
+  final double maxFallSpeed = 150;
 
   bool canFall = true;
 
@@ -90,14 +88,10 @@ class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameRefe
     debugMode = true;
   }
 
-  @override void onCollisionStart(Set<Vector2> intersectionPoints, PositionComponent other) {
-    super.onCollisionStart(intersectionPoints, other);
-    // print("Player collided with ${other.runtimeType}. Player coordinates are ${position.x.toInt()}; ${position.y.toInt()}");
-    // print("Coordinates of the intersection points are");
-    // intersectionPoints.forEach((item) {
-    //   print("${item.x}; ${item.y}");
-    // });
 
+  @override
+  void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
+    super.onCollision(intersectionPoints, other);
     if (other is BlockComponent) {
 
       final playerBottom = position.y + size.y;
@@ -114,12 +108,6 @@ class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameRefe
         
       }
     }
-  }
-
-  @override
-  void onCollisionEnd(PositionComponent other) {
-    super.onCollisionEnd(other);
-    print("Player finished colliding with ${other.runtimeType}. Player coordinates are ${position.x.toInt()}; ${position.y.toInt()}");
   }
 
   @override
