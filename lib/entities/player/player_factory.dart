@@ -3,6 +3,7 @@ import 'package:flame/components.dart';
 import 'package:pixel_adventure/enums/player_state.dart';
 import 'package:pixel_adventure/pixel_adventure.dart';
 import 'package:pixel_adventure/settings/game_settings.dart';
+import 'package:pixel_adventure/terrain/block_component.dart';
 
 class PlayerFactory {
 
@@ -40,6 +41,12 @@ class PlayerFactory {
 class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameReference<PixelAdventureGame>, CollisionCallbacks {
 
   final String spriteBaseName;
+
+  Vector2 velocity = Vector2.zero();
+  final gravity = 500;
+  final double maxFallSpeed = 300;
+
+  bool canFall = true;
 
   Player({super.position, required this.spriteBaseName}) :
     super(size: Vector2.all(32), anchor: Anchor.topLeft);
@@ -84,24 +91,46 @@ class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameRefe
   }
 
   @override void onCollisionStart(Set<Vector2> intersectionPoints, PositionComponent other) {
-    print("Player collided with ${other.runtimeType}. Player coordinates are ${position.x.toInt()}; ${position.y.toInt()}");
-    print("Coordinates of the intersection points are");
-    intersectionPoints.forEach((item) {
-      print("${item.x}; ${item.y}");
-    });
     super.onCollisionStart(intersectionPoints, other);
+    // print("Player collided with ${other.runtimeType}. Player coordinates are ${position.x.toInt()}; ${position.y.toInt()}");
+    // print("Coordinates of the intersection points are");
+    // intersectionPoints.forEach((item) {
+    //   print("${item.x}; ${item.y}");
+    // });
+
+    if (other is BlockComponent) {
+
+      final playerBottom = position.y + size.y;
+      final intersectionY = intersectionPoints.first.y;
+
+      if (intersectionY >= playerBottom - 5) {
+        // landed on top of block
+
+        velocity.y = 0;
+
+        // Align player on top of block (optional, helps avoid jittering)
+        position.y = other.position.y - size.y;
+        canFall = false;
+        
+      }
+    }
   }
 
   @override
   void onCollisionEnd(PositionComponent other) {
-    print("Player finished colliding with ${other.runtimeType}. Player coordinates are ${position.x.toInt()}; ${position.y.toInt()}");
     super.onCollisionEnd(other);
+    print("Player finished colliding with ${other.runtimeType}. Player coordinates are ${position.x.toInt()}; ${position.y.toInt()}");
   }
 
   @override
   void update(double dt) {
     super.update(dt);
-    position.y += 10 * dt;
-    // print("Player updated! New position is ${position.x}; ${position.y}");
+    if (canFall) {
+      velocity.y += gravity* dt;
+      if (velocity.y > maxFallSpeed) {
+        velocity.y = maxFallSpeed;
+      }
+      position += velocity * dt;      
+    }
   }
 }
