@@ -9,7 +9,7 @@ class BlockComponent extends PositionComponent {
 
   @override
   FutureOr<void> onLoad() {
-    add(RectangleHitbox(position: position, size: size));
+    add(RectangleHitbox(size: size));
     debugMode = true;
   }
 }

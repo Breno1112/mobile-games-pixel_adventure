@@ -79,7 +79,7 @@ class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameRefe
   }
   
   Future<void> _setUpHitbox() async {
-    add(RectangleHitbox(size: Vector2.all(32), position: position));
+    add(RectangleHitbox(size: Vector2.all(32)));
     debugMode = true;
   }
 
