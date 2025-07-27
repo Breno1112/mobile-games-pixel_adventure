@@ -13,7 +13,7 @@ class PixelAdventureGame extends FlameGame {
     camera = CameraComponent(
       world: world
     );
-    camera.viewfinder.anchor = Anchor.topLeft;
+    camera.viewfinder.anchor = Anchor(0.1, 0.8);
     await add(camera);
     await add(world);
     return super.onLoad();

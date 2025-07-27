@@ -4,7 +4,7 @@ import 'package:pixel_adventure/entities/player/player_factory.dart';
 import 'package:pixel_adventure/pixel_adventure.dart';
 import 'package:pixel_adventure/terrain/block_component.dart';
 
-class DefaultWorld extends World with HasGameReference<PixelAdventureGame> {
+class DefaultWorld extends World with HasGameReference<PixelAdventureGame>, HasCollisionDetection {
 
   final String _levelFile;
 
@@ -33,8 +33,15 @@ class DefaultWorld extends World with HasGameReference<PixelAdventureGame> {
           _player = PlayerFactory().newPlayerOnPosition(obj.position);
           add(_player!);
           break;
+        default:
+          break;
+      }
+    });
+    _map.tileMap.getLayer<ObjectGroup>('Terrain')?.objects.forEach((obj) {
+      switch(obj.class_) {
         case 'Block':
-          add(BlockComponent(position: obj.position));
+          add(BlockComponent(position: obj.position, size: obj.size));
+          break;
         default:
           break;
       }
@@ -43,7 +50,8 @@ class DefaultWorld extends World with HasGameReference<PixelAdventureGame> {
   
   Future<void> _postSetUpCamera() async {
     if (_player != null) {
-      game.camera.viewfinder.anchor = _player!.anchor;
+      // game.camera.viewfinder.anchor = _player!.anchor;
+      game.camera.follow(_player!);
     }
   }
 }

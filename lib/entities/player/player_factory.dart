@@ -1,3 +1,4 @@
+import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:pixel_adventure/enums/player_state.dart';
 import 'package:pixel_adventure/pixel_adventure.dart';
@@ -36,7 +37,7 @@ class PlayerFactory {
 
 }
 
-class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameReference<PixelAdventureGame> {
+class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameReference<PixelAdventureGame>, CollisionCallbacks {
 
   final String spriteBaseName;
 
@@ -45,20 +46,24 @@ class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameRefe
 
   @override
   Future<void> onLoad() async {
-
-    animations = <PlayerState, SpriteAnimation>{
-      PlayerState.doubleJump: await createAnimation('main_characters/$spriteBaseName/Double Jump (32x32).png', 6, 0.1, Vector2(32, 32), loop: false),
-      PlayerState.fall: await createAnimation('main_characters/$spriteBaseName/Fall (32x32).png', 1, 0.1, Vector2(32, 32), loop: false),
-      PlayerState.hit: await createAnimation('main_characters/$spriteBaseName/Hit (32x32).png', 7, 0.1, Vector2(32, 32), loop: false),
-      PlayerState.idle: await createAnimation('main_characters/$spriteBaseName/Idle (32x32).png', 11, 0.1, Vector2(32, 32)),
-      PlayerState.jump: await createAnimation('main_characters/$spriteBaseName/Jump (32x32).png', 1, 0.1, Vector2(32, 32), loop: false),
-      PlayerState.run: await createAnimation('main_characters/$spriteBaseName/Run (32x32).png', 12, 0.05, Vector2(32, 32)),
-      PlayerState.wallJump: await createAnimation('main_characters/$spriteBaseName/Wall Jump (32x32).png', 5, 0.1, Vector2(32, 32), loop: false),
-    };
+    await _setUpAnimations();
+    await _setUpHitbox();
     current = PlayerState.idle;
   }
 
-  Future<SpriteAnimation> createAnimation(String path, int count, double stepTime, Vector2 size, {bool loop = true}) async {
+  Future<void> _setUpAnimations() async {
+    animations = <PlayerState, SpriteAnimation>{
+      PlayerState.doubleJump: await _createAnimation('main_characters/$spriteBaseName/Double Jump (32x32).png', 6, 0.1, Vector2(32, 32), loop: false),
+      PlayerState.fall: await _createAnimation('main_characters/$spriteBaseName/Fall (32x32).png', 1, 0.1, Vector2(32, 32), loop: false),
+      PlayerState.hit: await _createAnimation('main_characters/$spriteBaseName/Hit (32x32).png', 7, 0.1, Vector2(32, 32), loop: false),
+      PlayerState.idle: await _createAnimation('main_characters/$spriteBaseName/Idle (32x32).png', 11, 0.1, Vector2(32, 32)),
+      PlayerState.jump: await _createAnimation('main_characters/$spriteBaseName/Jump (32x32).png', 1, 0.1, Vector2(32, 32), loop: false),
+      PlayerState.run: await _createAnimation('main_characters/$spriteBaseName/Run (32x32).png', 12, 0.05, Vector2(32, 32)),
+      PlayerState.wallJump: await _createAnimation('main_characters/$spriteBaseName/Wall Jump (32x32).png', 5, 0.1, Vector2(32, 32), loop: false),
+    };
+  }
+
+  Future<SpriteAnimation> _createAnimation(String path, int count, double stepTime, Vector2 size, {bool loop = true}) async {
     final image = await game.images.load(path);
     SpriteAnimation animation = SpriteAnimation.fromFrameData(
       image,
@@ -70,5 +75,10 @@ class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameRefe
       ),
     );
     return animation;
+  }
+  
+  Future<void> _setUpHitbox() async {
+    add(RectangleHitbox(size: Vector2.all(32), position: position));
+    debugMode = true;
   }
 }
