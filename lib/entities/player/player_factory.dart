@@ -46,6 +46,7 @@ class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameRefe
 
   @override
   Future<void> onLoad() async {
+    await super.onLoad();
     await _setUpAnimations();
     await _setUpHitbox();
     current = PlayerState.idle;
@@ -80,5 +81,27 @@ class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameRefe
   Future<void> _setUpHitbox() async {
     add(RectangleHitbox(size: Vector2.all(32), position: position));
     debugMode = true;
+  }
+
+  @override void onCollisionStart(Set<Vector2> intersectionPoints, PositionComponent other) {
+    print("Player collided with ${other.runtimeType}. Player coordinates are ${position.x.toInt()}; ${position.y.toInt()}");
+    print("Coordinates of the intersection points are");
+    intersectionPoints.forEach((item) {
+      print("${item.x}; ${item.y}");
+    });
+    super.onCollisionStart(intersectionPoints, other);
+  }
+
+  @override
+  void onCollisionEnd(PositionComponent other) {
+    print("Player finished colliding with ${other.runtimeType}. Player coordinates are ${position.x.toInt()}; ${position.y.toInt()}");
+    super.onCollisionEnd(other);
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    position.y += 10 * dt;
+    // print("Player updated! New position is ${position.x}; ${position.y}");
   }
 }

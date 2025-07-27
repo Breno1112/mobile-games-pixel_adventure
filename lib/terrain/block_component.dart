@@ -5,7 +5,7 @@ import 'package:flame/components.dart';
 
 class BlockComponent extends PositionComponent {
 
-  BlockComponent({super.position, super.size});
+  BlockComponent({super.position, super.size}): super(anchor: Anchor.topLeft);
 
   @override
   FutureOr<void> onLoad() {

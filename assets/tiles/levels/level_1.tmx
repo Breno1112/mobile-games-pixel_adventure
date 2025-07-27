@@ -25,10 +25,10 @@
 29,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,31
 </data>
  </layer>
- <objectgroup id="3" name="Terrain">
+ <objectgroup id="3" name="TerrainObjects">
   <object id="2" name="Ground" type="Block" x="0" y="288" width="480" height="32"/>
  </objectgroup>
  <objectgroup id="2" name="Entities">
-  <object id="1" name="Player" type="Player" x="16" y="256" width="32" height="32"/>
+  <object id="1" name="Player" type="Player" x="16" y="160" width="32" height="32"/>
  </objectgroup>
 </map>

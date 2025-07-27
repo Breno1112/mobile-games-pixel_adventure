@@ -37,7 +37,7 @@ class DefaultWorld extends World with HasGameReference<PixelAdventureGame>, HasC
           break;
       }
     });
-    _map.tileMap.getLayer<ObjectGroup>('Terrain')?.objects.forEach((obj) {
+    _map.tileMap.getLayer<ObjectGroup>('TerrainObjects')?.objects.forEach((obj) {
       switch(obj.class_) {
         case 'Block':
           add(BlockComponent(position: obj.position, size: obj.size));
