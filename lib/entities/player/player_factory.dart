@@ -142,10 +142,10 @@ class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameRefe
   @override
   bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
     if (event is KeyDownEvent) {
-      if (keysPressed.contains(LogicalKeyboardKey.arrowLeft) ||
+      if (keysPressed.contains(LogicalKeyboardKey.arrowRight) ||
         keysPressed.contains(LogicalKeyboardKey.keyD)) {
           _moveHorizontally(1, keysPressed.contains(LogicalKeyboardKey.shiftLeft));
-      } else if (keysPressed.contains(LogicalKeyboardKey.arrowRight) ||
+      } else if (keysPressed.contains(LogicalKeyboardKey.arrowLeft) ||
         keysPressed.contains(LogicalKeyboardKey.keyA)) {
           _moveHorizontally(-1, keysPressed.contains(LogicalKeyboardKey.shiftLeft));
       }
