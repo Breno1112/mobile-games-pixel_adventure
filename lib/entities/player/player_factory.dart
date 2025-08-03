@@ -9,7 +9,6 @@ import 'package:pixel_adventure/settings/game_settings.dart';
 import 'package:pixel_adventure/terrain/block_component.dart';
 
 class PlayerFactory {
-
   PlayerFactory._();
 
   static final PlayerFactory _instance = PlayerFactory._();
@@ -26,36 +25,43 @@ class PlayerFactory {
   }
 
   Player constructNewPlayer() {
-    _currentPlayer = Player(spriteBaseName: GameSettings().playerSettings.playerAppearence.playerSpriteName);
+    _currentPlayer = Player(
+      spriteBaseName:
+          GameSettings().playerSettings.playerAppearence.playerSpriteName,
+    );
     return _currentPlayer!;
   }
 
   Player newPlayerOnPosition(Vector2 position) {
     _currentPlayer = Player(
-      spriteBaseName: GameSettings().playerSettings.playerAppearence.playerSpriteName,
-      position: position
-      );
+      spriteBaseName:
+          GameSettings().playerSettings.playerAppearence.playerSpriteName,
+      position: position,
+    );
     return _currentPlayer!;
   }
 }
 
-class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameReference<PixelAdventureGame>, CollisionCallbacks, KeyboardHandler {
-
+class Player extends SpriteAnimationGroupComponent<PlayerState>
+    with
+        HasGameReference<PixelAdventureGame>,
+        CollisionCallbacks,
+        KeyboardHandler {
   final String spriteBaseName;
 
   Vector2 velocity = Vector2.zero();
-
+  final int horizontalMaxNormalMoveSpeed = 50;
+  final int horizontalMaxRunningMoveSpeed = 150;
+  final int horizontalNormalMoveSpeedAcceleration = 25;
+  final int horizontalRunningMoveSpeedAcceleration = 75;
+  bool canRun = true;
 
   final gravity = 800;
   final double maxFallSpeed = 150;
   bool canFall = true;
 
-  final normalMoveSpeed = 50;
-  final runMoveSpeed = 100;
-  final dragHorizontalSpeed = 35;
-
-  Player({super.position, required this.spriteBaseName}) :
-    super(size: Vector2.all(32), anchor: Anchor.topLeft);
+  Player({super.position, required this.spriteBaseName})
+    : super(size: Vector2.all(32), anchor: Anchor.topLeft);
 
   @override
   Future<void> onLoad() async {
@@ -67,55 +73,79 @@ class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameRefe
 
   Future<void> _setUpAnimations() async {
     animations = <PlayerState, SpriteAnimation>{
-      PlayerState.doubleJump: await _createAnimation('main_characters/$spriteBaseName/Double Jump (32x32).png', 6, 0.1, Vector2(32, 32), loop: false),
-      PlayerState.fall: await _createAnimation('main_characters/$spriteBaseName/Fall (32x32).png', 1, 0.1, Vector2(32, 32), loop: false),
-      PlayerState.hit: await _createAnimation('main_characters/$spriteBaseName/Hit (32x32).png', 7, 0.1, Vector2(32, 32), loop: false),
-      PlayerState.idle: await _createAnimation('main_characters/$spriteBaseName/Idle (32x32).png', 11, 0.1, Vector2(32, 32)),
-      PlayerState.jump: await _createAnimation('main_characters/$spriteBaseName/Jump (32x32).png', 1, 0.1, Vector2(32, 32), loop: false),
-      PlayerState.run: await _createAnimation('main_characters/$spriteBaseName/Run (32x32).png', 12, 0.05, Vector2(32, 32)),
-      PlayerState.wallJump: await _createAnimation('main_characters/$spriteBaseName/Wall Jump (32x32).png', 5, 0.1, Vector2(32, 32), loop: false),
+      PlayerState.doubleJump: await _createAnimation(
+        'main_characters/$spriteBaseName/Double Jump (32x32).png',
+        6,
+        0.1,
+        Vector2(32, 32),
+        loop: false,
+      ),
+      PlayerState.fall: await _createAnimation(
+        'main_characters/$spriteBaseName/Fall (32x32).png',
+        1,
+        0.1,
+        Vector2(32, 32),
+        loop: false,
+      ),
+      PlayerState.hit: await _createAnimation(
+        'main_characters/$spriteBaseName/Hit (32x32).png',
+        7,
+        0.1,
+        Vector2(32, 32),
+        loop: false,
+      ),
+      PlayerState.idle: await _createAnimation(
+        'main_characters/$spriteBaseName/Idle (32x32).png',
+        11,
+        0.1,
+        Vector2(32, 32),
+      ),
+      PlayerState.jump: await _createAnimation(
+        'main_characters/$spriteBaseName/Jump (32x32).png',
+        1,
+        0.1,
+        Vector2(32, 32),
+        loop: false,
+      ),
+      PlayerState.run: await _createAnimation(
+        'main_characters/$spriteBaseName/Run (32x32).png',
+        12,
+        0.05,
+        Vector2(32, 32),
+      ),
+      PlayerState.wallJump: await _createAnimation(
+        'main_characters/$spriteBaseName/Wall Jump (32x32).png',
+        5,
+        0.1,
+        Vector2(32, 32),
+        loop: false,
+      ),
     };
   }
 
-  Future<SpriteAnimation> _createAnimation(String path, int count, double stepTime, Vector2 size, {bool loop = true}) async {
+  Future<SpriteAnimation> _createAnimation(
+    String path,
+    int count,
+    double stepTime,
+    Vector2 size, {
+    bool loop = true,
+  }) async {
     final image = await game.images.load(path);
     SpriteAnimation animation = SpriteAnimation.fromFrameData(
       image,
       SpriteAnimationData.sequenced(
-        amount: count,          // number of frames
-        stepTime: stepTime,       // duration per frame (in seconds)
+        amount: count, // number of frames
+        stepTime: stepTime, // duration per frame (in seconds)
         textureSize: size, // size of each frame
-        loop: loop
+        loop: loop,
       ),
     );
     return animation;
   }
-  
+
   Future<void> _setUpHitbox() async {
     add(RectangleHitbox(size: Vector2.all(32)));
     debugMode = true;
-  }
-
-
-  @override
-  void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
-    super.onCollision(intersectionPoints, other);
-    if (other is BlockComponent) {
-
-      final playerBottom = position.y + size.y;
-      final intersectionY = intersectionPoints.first.y;
-
-      if (intersectionY >= playerBottom - 5) {
-        // landed on top of block
-
-        velocity.y = 0;
-
-        // Align player on top of block (optional, helps avoid jittering)
-        position.y = other.position.y - size.y;
-        canFall = false;
-        
-      }
-    }
   }
 
   @override
@@ -123,6 +153,33 @@ class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameRefe
     super.update(dt);
     _applyGravity(dt);
     _applyMovement(dt);
+  }
+
+  @override
+  void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
+    super.onCollision(intersectionPoints, other);
+    switch (other.runtimeType) {
+      case const (BlockComponent):
+        _onCollidedWithBlock(intersectionPoints, other);
+    }
+  }
+
+  void _onCollidedWithBlock(
+    Set<Vector2> intersectionPoints,
+    PositionComponent other,
+  ) {
+    final playerBottom = position.y + size.y;
+    final intersectionY = intersectionPoints.first.y;
+
+    if (intersectionY >= playerBottom - 5) {
+      // landed on top of block
+
+      velocity.y = 0;
+
+      // Align player on top of block (optional, helps avoid jittering)
+      position.y = other.position.y - size.y;
+      canFall = false;
+    }
   }
 
   void _applyGravity(double dt) {
@@ -143,22 +200,34 @@ class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameRefe
   bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
     if (event is KeyDownEvent) {
       if (keysPressed.contains(LogicalKeyboardKey.arrowRight) ||
-        keysPressed.contains(LogicalKeyboardKey.keyD)) {
-          _moveHorizontally(1, keysPressed.contains(LogicalKeyboardKey.shiftLeft));
+          keysPressed.contains(LogicalKeyboardKey.keyD)) {
+        _moveHorizontally(
+          1,
+          keysPressed.contains(LogicalKeyboardKey.shiftLeft),
+        );
       } else if (keysPressed.contains(LogicalKeyboardKey.arrowLeft) ||
-        keysPressed.contains(LogicalKeyboardKey.keyA)) {
-          _moveHorizontally(-1, keysPressed.contains(LogicalKeyboardKey.shiftLeft));
+          keysPressed.contains(LogicalKeyboardKey.keyA)) {
+        _moveHorizontally(
+          -1,
+          keysPressed.contains(LogicalKeyboardKey.shiftLeft),
+        );
       }
     }
 
     return super.onKeyEvent(event, keysPressed);
   }
-  
+
   void _moveHorizontally(int i, bool running) {
-    if (running) {
-      velocity.x = runMoveSpeed * i.toDouble();
+    if (canRun && running) {
+      velocity.x += horizontalRunningMoveSpeedAcceleration * i.toDouble();
+      if (velocity.x.abs() > horizontalMaxRunningMoveSpeed) {
+        velocity.x = horizontalMaxRunningMoveSpeed * i.toDouble();
+      }
     } else {
-      velocity.x = normalMoveSpeed * i.toDouble();
+      velocity.x += horizontalNormalMoveSpeedAcceleration * i.toDouble();
+      if (velocity.x.abs() > horizontalMaxNormalMoveSpeed) {
+        velocity.x = horizontalMaxNormalMoveSpeed * i.toDouble();
+      }
     }
   }
 }
