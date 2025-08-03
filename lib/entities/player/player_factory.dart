@@ -55,7 +55,11 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
   final int horizontalNormalMoveSpeedAcceleration = 250;
   final int horizontalRunningMoveSpeedAcceleration = 500;
   final int horizontalDragMoveSpeed = 50000;
+  final int maxFramesToStopHorizontalMovement = 10;
+  int usedFramesToStopHorizontalMovement = 0;
   bool canRun = true;
+
+  bool isFacingRight = true;
 
   final gravity = 800;
   final double maxFallSpeed = 150;
@@ -64,6 +68,7 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
   // handle keyboard
 
   Set<int> _keysPressed = {};
+  Set<int> _horizontalKeysPressed = {};
 
   Player({super.position, required this.spriteBaseName})
     : super(size: Vector2.all(32), anchor: Anchor.topLeft);
@@ -205,11 +210,23 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
   @override
   bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
     _keysPressed = keysPressed.map((i) => i.keyId).toSet();
+    _remapHorizontalKeysPressed(keysPressed);
     return super.onKeyEvent(event, keysPressed);
   }
 
+  void _remapHorizontalKeysPressed(Set<LogicalKeyboardKey> keysPressed) {
+    final Set<int> horizontalKeys = {
+      LogicalKeyboardKey.arrowLeft.keyId,
+      LogicalKeyboardKey.arrowRight.keyId,
+      LogicalKeyboardKey.keyA.keyId,
+      LogicalKeyboardKey.keyD.keyId,
+      };
+    _horizontalKeysPressed = keysPressed.map((i) => i.keyId).where((i) => horizontalKeys.contains(i)).toSet();
+  }
+
   void _checkKeyboardInput(double dt) {
-    if (_keysPressed.isEmpty) {
+    if (_horizontalKeysPressed.isEmpty) {
+      print("empty horizontal keys pressed");
       _stopHorizontalMovement(dt);
     }
     if (_keysPressed.contains(LogicalKeyboardKey.arrowRight.keyId) ||
@@ -223,9 +240,20 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
         dt
       );
     }
+
+    print("velocity.x = ${velocity.x}");
   }
 
   void _moveHorizontally(int i, bool running, double dt) {
+    print("isFacingRight = ${isFacingRight}\ni = ${i}\nvelocity.x = ${velocity.x}");
+    if (isFacingRight && i < 0 && velocity.x > 0) {
+      _stopHorizontalMovement(dt);
+      return;
+    } else if (!isFacingRight && i > 0 && velocity.x < 0) {
+      _stopHorizontalMovement(dt);
+      return;
+    }
+    _conditionallyFlipSprite(i);
     if (canRun && running) {
       velocity.x += horizontalRunningMoveSpeedAcceleration * i.toDouble() * dt;
       if (velocity.x.abs() > horizontalMaxRunningMoveSpeed) {
@@ -259,8 +287,27 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
       return;
     }
     if (velocity.x.abs() < (horizontalDragMoveSpeed * dt).abs()) {
-      dragSpeed = velocity.x.abs() / dt / 10;
+      dragSpeed = velocity.x.abs() / dt / maxFramesToStopHorizontalMovement;
+      usedFramesToStopHorizontalMovement ++;
     }
-    velocity.x += dragSpeed * direction * dt;
+
+    if (usedFramesToStopHorizontalMovement >= maxFramesToStopHorizontalMovement) {
+      velocity.x = 0;
+      usedFramesToStopHorizontalMovement = 0;
+    } else {
+      velocity.x += dragSpeed * direction * dt;
+    }
+  }
+  
+  void _conditionallyFlipSprite(int i) {
+    if (
+      isFacingRight && i < 0 ||
+        !isFacingRight && i > 0
+      ) {
+      flipHorizontallyAroundCenter();
+      isFacingRight = !isFacingRight;
+    }
+
+    print("isFacingRight = ${isFacingRight}\ni = ${i}");
   }
 }
