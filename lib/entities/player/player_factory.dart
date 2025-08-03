@@ -49,7 +49,10 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
         KeyboardHandler {
   final String spriteBaseName;
 
+
   Vector2 velocity = Vector2.zero();
+
+  // handle horizontal movement
   final int horizontalMaxNormalMoveSpeed = 250;
   final int horizontalMaxRunningMoveSpeed = 500;
   final int horizontalNormalMoveSpeedAcceleration = 250;
@@ -59,16 +62,24 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
   int usedFramesToStopHorizontalMovement = 0;
   bool canRun = true;
 
+
+  // handle animation side
   bool isFacingRight = true;
 
+
+  // handle gravity
   final gravity = 800;
-  final double maxFallSpeed = 150;
+  final double maxFallSpeed = 350;
   bool canFall = true;
 
   // handle keyboard
-
   Set<int> _keysPressed = {};
   Set<int> _horizontalKeysPressed = {};
+
+  // handle jump
+
+  final double jumpForce = 350;
+  bool canJump = true;
 
   Player({super.position, required this.spriteBaseName})
     : super(size: Vector2.all(32), anchor: Anchor.topLeft);
@@ -196,6 +207,7 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
       // Align player on top of block (optional, helps avoid jittering)
       position.y = other.position.y - size.y;
       canFall = false;
+      canJump = true;
     }
   }
 
@@ -234,6 +246,9 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
     if (_horizontalKeysPressed.isEmpty) {
       print("empty horizontal keys pressed");
       _stopHorizontalMovement(dt);
+    }
+    if (_keysPressed.contains(LogicalKeyboardKey.space.keyId)) {
+      _jump(dt);
     }
     if (_keysPressed.contains(LogicalKeyboardKey.arrowRight.keyId) ||
         _keysPressed.contains(LogicalKeyboardKey.keyD.keyId)) {
@@ -317,5 +332,14 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
       isFacingRight = !isFacingRight;
     }
     print("isFacingRight = ${isFacingRight}\ni = ${i}");
+  }
+
+  void _jump(dt) {
+    if (!canJump) {
+      return;
+    }
+    velocity.y -= jumpForce;
+    canJump = false;
+    canFall = true;
   }
 }
