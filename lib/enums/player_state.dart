@@ -6,5 +6,6 @@ enum PlayerState {
   idle,
   jump,
   run,
-  wallJump
+  wallJump,
+  walk
 }

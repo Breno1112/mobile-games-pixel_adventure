@@ -9,7 +9,6 @@ import 'package:pixel_adventure/settings/game_settings.dart';
 import 'package:pixel_adventure/terrain/block_component.dart';
 
 class PlayerFactory {
-
   PlayerFactory._();
 
   static final PlayerFactory _instance = PlayerFactory._();
@@ -26,36 +25,53 @@ class PlayerFactory {
   }
 
   Player constructNewPlayer() {
-    _currentPlayer = Player(spriteBaseName: GameSettings().playerSettings.playerAppearence.playerSpriteName);
+    _currentPlayer = Player(
+      spriteBaseName:
+          GameSettings().playerSettings.playerAppearence.playerSpriteName,
+    );
     return _currentPlayer!;
   }
 
   Player newPlayerOnPosition(Vector2 position) {
     _currentPlayer = Player(
-      spriteBaseName: GameSettings().playerSettings.playerAppearence.playerSpriteName,
-      position: position
-      );
+      spriteBaseName:
+          GameSettings().playerSettings.playerAppearence.playerSpriteName,
+      position: position,
+    );
     return _currentPlayer!;
   }
 }
 
-class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameReference<PixelAdventureGame>, CollisionCallbacks, KeyboardHandler {
-
+class Player extends SpriteAnimationGroupComponent<PlayerState>
+    with
+        HasGameReference<PixelAdventureGame>,
+        CollisionCallbacks,
+        KeyboardHandler {
   final String spriteBaseName;
 
   Vector2 velocity = Vector2.zero();
+  final int horizontalMaxNormalMoveSpeed = 250;
+  final int horizontalMaxRunningMoveSpeed = 500;
+  final int horizontalNormalMoveSpeedAcceleration = 250;
+  final int horizontalRunningMoveSpeedAcceleration = 500;
+  final int horizontalDragMoveSpeed = 50000;
+  final int maxFramesToStopHorizontalMovement = 10;
+  int usedFramesToStopHorizontalMovement = 0;
+  bool canRun = true;
 
+  bool isFacingRight = true;
 
   final gravity = 800;
   final double maxFallSpeed = 150;
   bool canFall = true;
 
-  final normalMoveSpeed = 50;
-  final runMoveSpeed = 100;
-  final dragHorizontalSpeed = 35;
+  // handle keyboard
 
-  Player({super.position, required this.spriteBaseName}) :
-    super(size: Vector2.all(32), anchor: Anchor.topLeft);
+  Set<int> _keysPressed = {};
+  Set<int> _horizontalKeysPressed = {};
+
+  Player({super.position, required this.spriteBaseName})
+    : super(size: Vector2.all(32), anchor: Anchor.topLeft);
 
   @override
   Future<void> onLoad() async {
@@ -67,62 +83,120 @@ class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameRefe
 
   Future<void> _setUpAnimations() async {
     animations = <PlayerState, SpriteAnimation>{
-      PlayerState.doubleJump: await _createAnimation('main_characters/$spriteBaseName/Double Jump (32x32).png', 6, 0.1, Vector2(32, 32), loop: false),
-      PlayerState.fall: await _createAnimation('main_characters/$spriteBaseName/Fall (32x32).png', 1, 0.1, Vector2(32, 32), loop: false),
-      PlayerState.hit: await _createAnimation('main_characters/$spriteBaseName/Hit (32x32).png', 7, 0.1, Vector2(32, 32), loop: false),
-      PlayerState.idle: await _createAnimation('main_characters/$spriteBaseName/Idle (32x32).png', 11, 0.1, Vector2(32, 32)),
-      PlayerState.jump: await _createAnimation('main_characters/$spriteBaseName/Jump (32x32).png', 1, 0.1, Vector2(32, 32), loop: false),
-      PlayerState.run: await _createAnimation('main_characters/$spriteBaseName/Run (32x32).png', 12, 0.05, Vector2(32, 32)),
-      PlayerState.wallJump: await _createAnimation('main_characters/$spriteBaseName/Wall Jump (32x32).png', 5, 0.1, Vector2(32, 32), loop: false),
+      PlayerState.doubleJump: await _createAnimation(
+        'main_characters/$spriteBaseName/Double Jump (32x32).png',
+        6,
+        0.1,
+        Vector2(32, 32),
+        loop: false,
+      ),
+      PlayerState.fall: await _createAnimation(
+        'main_characters/$spriteBaseName/Fall (32x32).png',
+        1,
+        0.1,
+        Vector2(32, 32),
+        loop: false,
+      ),
+      PlayerState.hit: await _createAnimation(
+        'main_characters/$spriteBaseName/Hit (32x32).png',
+        7,
+        0.1,
+        Vector2(32, 32),
+        loop: false,
+      ),
+      PlayerState.idle: await _createAnimation(
+        'main_characters/$spriteBaseName/Idle (32x32).png',
+        11,
+        0.1,
+        Vector2(32, 32),
+      ),
+      PlayerState.jump: await _createAnimation(
+        'main_characters/$spriteBaseName/Jump (32x32).png',
+        1,
+        0.1,
+        Vector2(32, 32),
+        loop: false,
+      ),
+      PlayerState.run: await _createAnimation(
+        'main_characters/$spriteBaseName/Run (32x32).png',
+        12,
+        0.03,
+        Vector2(32, 32),
+      ),
+      PlayerState.wallJump: await _createAnimation(
+        'main_characters/$spriteBaseName/Wall Jump (32x32).png',
+        5,
+        0.1,
+        Vector2(32, 32),
+        loop: false,
+      ),
+      PlayerState.walk: await _createAnimation(
+        'main_characters/$spriteBaseName/Run (32x32).png',
+        12,
+        0.1,
+        Vector2(32, 32),
+      ),
     };
   }
 
-  Future<SpriteAnimation> _createAnimation(String path, int count, double stepTime, Vector2 size, {bool loop = true}) async {
+  Future<SpriteAnimation> _createAnimation(
+    String path,
+    int count,
+    double stepTime,
+    Vector2 size, {
+    bool loop = true,
+  }) async {
     final image = await game.images.load(path);
     SpriteAnimation animation = SpriteAnimation.fromFrameData(
       image,
       SpriteAnimationData.sequenced(
-        amount: count,          // number of frames
-        stepTime: stepTime,       // duration per frame (in seconds)
+        amount: count, // number of frames
+        stepTime: stepTime, // duration per frame (in seconds)
         textureSize: size, // size of each frame
-        loop: loop
+        loop: loop,
       ),
     );
     return animation;
   }
-  
+
   Future<void> _setUpHitbox() async {
     add(RectangleHitbox(size: Vector2.all(32)));
     debugMode = true;
-  }
-
-
-  @override
-  void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
-    super.onCollision(intersectionPoints, other);
-    if (other is BlockComponent) {
-
-      final playerBottom = position.y + size.y;
-      final intersectionY = intersectionPoints.first.y;
-
-      if (intersectionY >= playerBottom - 5) {
-        // landed on top of block
-
-        velocity.y = 0;
-
-        // Align player on top of block (optional, helps avoid jittering)
-        position.y = other.position.y - size.y;
-        canFall = false;
-        
-      }
-    }
   }
 
   @override
   void update(double dt) {
     super.update(dt);
     _applyGravity(dt);
+    _checkKeyboardInput(dt);
     _applyMovement(dt);
+  }
+
+  @override
+  void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
+    super.onCollision(intersectionPoints, other);
+    switch (other.runtimeType) {
+      case const (BlockComponent):
+        _onCollidedWithBlock(intersectionPoints, other);
+    }
+  }
+
+  void _onCollidedWithBlock(
+    Set<Vector2> intersectionPoints,
+    PositionComponent other,
+  ) {
+    final playerBottom = position.y + size.y;
+    final intersectionY = intersectionPoints.first.y;
+
+    if (intersectionY >= playerBottom - 5) {
+      // landed on top of block
+
+      velocity.y = 0;
+
+      // Align player on top of block (optional, helps avoid jittering)
+      position.y = other.position.y - size.y;
+      canFall = false;
+    }
   }
 
   void _applyGravity(double dt) {
@@ -141,24 +215,107 @@ class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameRefe
 
   @override
   bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
-    if (event is KeyDownEvent) {
-      if (keysPressed.contains(LogicalKeyboardKey.arrowLeft) ||
-        keysPressed.contains(LogicalKeyboardKey.keyD)) {
-          _moveHorizontally(1, keysPressed.contains(LogicalKeyboardKey.shiftLeft));
-      } else if (keysPressed.contains(LogicalKeyboardKey.arrowRight) ||
-        keysPressed.contains(LogicalKeyboardKey.keyA)) {
-          _moveHorizontally(-1, keysPressed.contains(LogicalKeyboardKey.shiftLeft));
-      }
-    }
-
+    _keysPressed = keysPressed.map((i) => i.keyId).toSet();
+    _remapHorizontalKeysPressed(keysPressed);
     return super.onKeyEvent(event, keysPressed);
   }
-  
-  void _moveHorizontally(int i, bool running) {
-    if (running) {
-      velocity.x = runMoveSpeed * i.toDouble();
-    } else {
-      velocity.x = normalMoveSpeed * i.toDouble();
+
+  void _remapHorizontalKeysPressed(Set<LogicalKeyboardKey> keysPressed) {
+    final Set<int> horizontalKeys = {
+      LogicalKeyboardKey.arrowLeft.keyId,
+      LogicalKeyboardKey.arrowRight.keyId,
+      LogicalKeyboardKey.keyA.keyId,
+      LogicalKeyboardKey.keyD.keyId,
+      };
+    _horizontalKeysPressed = keysPressed.map((i) => i.keyId).where((i) => horizontalKeys.contains(i)).toSet();
+  }
+
+  void _checkKeyboardInput(double dt) {
+    if (_horizontalKeysPressed.isEmpty) {
+      print("empty horizontal keys pressed");
+      _stopHorizontalMovement(dt);
     }
+    if (_keysPressed.contains(LogicalKeyboardKey.arrowRight.keyId) ||
+        _keysPressed.contains(LogicalKeyboardKey.keyD.keyId)) {
+      _moveHorizontally(1, _keysPressed.contains(LogicalKeyboardKey.shiftLeft.keyId), dt);
+    } else if (_keysPressed.contains(LogicalKeyboardKey.arrowLeft.keyId) ||
+        _keysPressed.contains(LogicalKeyboardKey.keyA.keyId)) {
+      _moveHorizontally(
+        -1,
+        _keysPressed.contains(LogicalKeyboardKey.shiftLeft.keyId),
+        dt
+      );
+    }
+
+    print("velocity.x = ${velocity.x}");
+  }
+
+  void _moveHorizontally(int i, bool running, double dt) {
+    print("isFacingRight = ${isFacingRight}\ni = ${i}\nvelocity.x = ${velocity.x}");
+    if (isFacingRight && i < 0 && velocity.x > 0) {
+      _stopHorizontalMovement(dt);
+      return;
+    } else if (!isFacingRight && i > 0 && velocity.x < 0) {
+      _stopHorizontalMovement(dt);
+      return;
+    }
+    _conditionallyFlipSprite(i);
+    if (canRun && running) {
+      velocity.x += horizontalRunningMoveSpeedAcceleration * i.toDouble() * dt;
+      if (velocity.x.abs() > horizontalMaxRunningMoveSpeed) {
+        velocity.x = horizontalMaxRunningMoveSpeed * i.toDouble();
+      }
+      current = PlayerState.run;
+    } else {
+      velocity.x += horizontalNormalMoveSpeedAcceleration * i.toDouble() * dt;
+      if (velocity.x.abs() > horizontalMaxNormalMoveSpeed) {
+        velocity.x = horizontalMaxNormalMoveSpeed * i.toDouble();
+      }
+      current = PlayerState.walk;
+    }
+  }
+
+  void _debugKeysPressed() {
+    if (_keysPressed.isEmpty) {
+      print("no keys are being pressed!");
+    }
+    for (int i in _keysPressed) {
+      print("pressing key id = ${i}");
+    }
+  }
+  
+  void _stopHorizontalMovement(double dt) {
+    int direction = 0;
+    double dragSpeed = horizontalDragMoveSpeed.toDouble();
+    if (velocity.x > 0) {
+      direction = -1;
+    } else if (velocity.x < 0) {
+      direction = 1;
+    } else {
+      return;
+    }
+    if (velocity.x.abs() < (horizontalDragMoveSpeed * dt).abs()) {
+      dragSpeed = velocity.x.abs() / dt / maxFramesToStopHorizontalMovement;
+      usedFramesToStopHorizontalMovement ++;
+    }
+
+    if (usedFramesToStopHorizontalMovement >= maxFramesToStopHorizontalMovement) {
+      velocity.x = 0;
+      usedFramesToStopHorizontalMovement = 0;
+      current = PlayerState.idle;
+    } else {
+      velocity.x += dragSpeed * direction * dt;
+    }
+  }
+  
+  void _conditionallyFlipSprite(int i) {
+    if (
+      isFacingRight && i < 0 ||
+        !isFacingRight && i > 0
+      ) {
+      flipHorizontallyAroundCenter();
+      isFacingRight = !isFacingRight;
+    }
+    print("isFacingRight = ${isFacingRight}\ni = ${i}");
   }
 }
