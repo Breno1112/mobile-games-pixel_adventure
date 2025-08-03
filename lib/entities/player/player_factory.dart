@@ -120,7 +120,7 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
       PlayerState.run: await _createAnimation(
         'main_characters/$spriteBaseName/Run (32x32).png',
         12,
-        0.05,
+        0.03,
         Vector2(32, 32),
       ),
       PlayerState.wallJump: await _createAnimation(
@@ -129,6 +129,12 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
         0.1,
         Vector2(32, 32),
         loop: false,
+      ),
+      PlayerState.walk: await _createAnimation(
+        'main_characters/$spriteBaseName/Run (32x32).png',
+        12,
+        0.1,
+        Vector2(32, 32),
       ),
     };
   }
@@ -259,11 +265,13 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
       if (velocity.x.abs() > horizontalMaxRunningMoveSpeed) {
         velocity.x = horizontalMaxRunningMoveSpeed * i.toDouble();
       }
+      current = PlayerState.run;
     } else {
       velocity.x += horizontalNormalMoveSpeedAcceleration * i.toDouble() * dt;
       if (velocity.x.abs() > horizontalMaxNormalMoveSpeed) {
         velocity.x = horizontalMaxNormalMoveSpeed * i.toDouble();
       }
+      current = PlayerState.walk;
     }
   }
 
@@ -294,6 +302,7 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
     if (usedFramesToStopHorizontalMovement >= maxFramesToStopHorizontalMovement) {
       velocity.x = 0;
       usedFramesToStopHorizontalMovement = 0;
+      current = PlayerState.idle;
     } else {
       velocity.x += dragSpeed * direction * dt;
     }
@@ -307,7 +316,6 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
       flipHorizontallyAroundCenter();
       isFacingRight = !isFacingRight;
     }
-
     print("isFacingRight = ${isFacingRight}\ni = ${i}");
   }
 }
