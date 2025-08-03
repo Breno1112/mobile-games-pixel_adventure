@@ -50,15 +50,20 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
   final String spriteBaseName;
 
   Vector2 velocity = Vector2.zero();
-  final int horizontalMaxNormalMoveSpeed = 50;
-  final int horizontalMaxRunningMoveSpeed = 150;
-  final int horizontalNormalMoveSpeedAcceleration = 25;
-  final int horizontalRunningMoveSpeedAcceleration = 75;
+  final int horizontalMaxNormalMoveSpeed = 250;
+  final int horizontalMaxRunningMoveSpeed = 500;
+  final int horizontalNormalMoveSpeedAcceleration = 250;
+  final int horizontalRunningMoveSpeedAcceleration = 500;
+  final int horizontalDragMoveSpeed = 50000;
   bool canRun = true;
 
   final gravity = 800;
   final double maxFallSpeed = 150;
   bool canFall = true;
+
+  // handle keyboard
+
+  Set<int> _keysPressed = {};
 
   Player({super.position, required this.spriteBaseName})
     : super(size: Vector2.all(32), anchor: Anchor.topLeft);
@@ -152,6 +157,7 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
   void update(double dt) {
     super.update(dt);
     _applyGravity(dt);
+    _checkKeyboardInput(dt);
     _applyMovement(dt);
   }
 
@@ -198,36 +204,63 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
 
   @override
   bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
-    if (event is KeyDownEvent) {
-      if (keysPressed.contains(LogicalKeyboardKey.arrowRight) ||
-          keysPressed.contains(LogicalKeyboardKey.keyD)) {
-        _moveHorizontally(
-          1,
-          keysPressed.contains(LogicalKeyboardKey.shiftLeft),
-        );
-      } else if (keysPressed.contains(LogicalKeyboardKey.arrowLeft) ||
-          keysPressed.contains(LogicalKeyboardKey.keyA)) {
-        _moveHorizontally(
-          -1,
-          keysPressed.contains(LogicalKeyboardKey.shiftLeft),
-        );
-      }
-    }
-
+    _keysPressed = keysPressed.map((i) => i.keyId).toSet();
     return super.onKeyEvent(event, keysPressed);
   }
 
-  void _moveHorizontally(int i, bool running) {
+  void _checkKeyboardInput(double dt) {
+    if (_keysPressed.isEmpty) {
+      _stopHorizontalMovement(dt);
+    }
+    if (_keysPressed.contains(LogicalKeyboardKey.arrowRight.keyId) ||
+        _keysPressed.contains(LogicalKeyboardKey.keyD.keyId)) {
+      _moveHorizontally(1, _keysPressed.contains(LogicalKeyboardKey.shiftLeft.keyId), dt);
+    } else if (_keysPressed.contains(LogicalKeyboardKey.arrowLeft.keyId) ||
+        _keysPressed.contains(LogicalKeyboardKey.keyA.keyId)) {
+      _moveHorizontally(
+        -1,
+        _keysPressed.contains(LogicalKeyboardKey.shiftLeft.keyId),
+        dt
+      );
+    }
+  }
+
+  void _moveHorizontally(int i, bool running, double dt) {
     if (canRun && running) {
-      velocity.x += horizontalRunningMoveSpeedAcceleration * i.toDouble();
+      velocity.x += horizontalRunningMoveSpeedAcceleration * i.toDouble() * dt;
       if (velocity.x.abs() > horizontalMaxRunningMoveSpeed) {
         velocity.x = horizontalMaxRunningMoveSpeed * i.toDouble();
       }
     } else {
-      velocity.x += horizontalNormalMoveSpeedAcceleration * i.toDouble();
+      velocity.x += horizontalNormalMoveSpeedAcceleration * i.toDouble() * dt;
       if (velocity.x.abs() > horizontalMaxNormalMoveSpeed) {
         velocity.x = horizontalMaxNormalMoveSpeed * i.toDouble();
       }
     }
+  }
+
+  void _debugKeysPressed() {
+    if (_keysPressed.isEmpty) {
+      print("no keys are being pressed!");
+    }
+    for (int i in _keysPressed) {
+      print("pressing key id = ${i}");
+    }
+  }
+  
+  void _stopHorizontalMovement(double dt) {
+    int direction = 0;
+    double dragSpeed = horizontalDragMoveSpeed.toDouble();
+    if (velocity.x > 0) {
+      direction = -1;
+    } else if (velocity.x < 0) {
+      direction = 1;
+    } else {
+      return;
+    }
+    if (velocity.x.abs() < (horizontalDragMoveSpeed * dt).abs()) {
+      dragSpeed = velocity.x.abs() / dt / 10;
+    }
+    velocity.x += dragSpeed * direction * dt;
   }
 }
