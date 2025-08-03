@@ -61,6 +61,7 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
   final int maxFramesToStopHorizontalMovement = 10;
   int usedFramesToStopHorizontalMovement = 0;
   bool canRun = true;
+  bool _running = false;
 
 
   // handle animation side
@@ -223,6 +224,7 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
 
   void _applyMovement(double dt) {
     position += velocity * dt;
+    _updatePlayerAnimation(dt);
   }
 
   @override
@@ -266,6 +268,7 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
   }
 
   void _moveHorizontally(int i, bool running, double dt) {
+    _running = running;
     print("isFacingRight = ${isFacingRight}\ni = ${i}\nvelocity.x = ${velocity.x}");
     if (isFacingRight && i < 0 && velocity.x > 0) {
       _stopHorizontalMovement(dt);
@@ -280,13 +283,17 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
       if (velocity.x.abs() > horizontalMaxRunningMoveSpeed) {
         velocity.x = horizontalMaxRunningMoveSpeed * i.toDouble();
       }
-      current = PlayerState.run;
+      if (current != PlayerState.jump && current != PlayerState.fall) {
+        // current = PlayerState.run;
+      }
     } else {
       velocity.x += horizontalNormalMoveSpeedAcceleration * i.toDouble() * dt;
       if (velocity.x.abs() > horizontalMaxNormalMoveSpeed) {
         velocity.x = horizontalMaxNormalMoveSpeed * i.toDouble();
       }
-      current = PlayerState.walk;
+      if (current != PlayerState.jump && current != PlayerState.fall) {
+        // current = PlayerState.walk;
+      }
     }
   }
 
@@ -317,7 +324,7 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
     if (usedFramesToStopHorizontalMovement >= maxFramesToStopHorizontalMovement) {
       velocity.x = 0;
       usedFramesToStopHorizontalMovement = 0;
-      current = PlayerState.idle;
+      // current = PlayerState.idle;
     } else {
       velocity.x += dragSpeed * direction * dt;
     }
@@ -341,5 +348,20 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
     velocity.y -= jumpForce;
     canJump = false;
     canFall = true;
+    // current = PlayerState.jump;
+  }
+  
+  void _updatePlayerAnimation(double dt) {
+    if (velocity.y < 0) {
+      current = PlayerState.jump;
+    } else if (velocity.y > 0) {
+      current = PlayerState.fall;
+    } else if (_running) {
+      current = PlayerState.run;
+    } else if (velocity.x.abs() > 0 && !_running) {
+      current = PlayerState.walk;
+    } else {
+      current = PlayerState.idle;
+    }
   }
 }
