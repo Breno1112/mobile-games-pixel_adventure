@@ -173,7 +173,7 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
 
   Future<void> _setUpHitbox() async {
     add(RectangleHitbox(size: Vector2.all(32)));
-    debugMode = true;
+    // debugMode = true;
   }
 
   @override
