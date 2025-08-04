@@ -8,8 +8,9 @@ class BlockComponent extends PositionComponent {
   BlockComponent({super.position, super.size}): super(anchor: Anchor.topLeft);
 
   @override
-  FutureOr<void> onLoad() {
+  FutureOr<void> onLoad() async {
+    await super.onLoad();
     add(RectangleHitbox(size: size));
-    // debugMode = true;
+    debugMode = true;
   }
 }

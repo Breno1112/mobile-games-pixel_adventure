@@ -2,6 +2,7 @@
 
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:flame/geometry.dart';
 import 'package:flutter/src/services/hardware_keyboard.dart';
 import 'package:pixel_adventure/enums/player_state.dart';
 import 'package:pixel_adventure/pixel_adventure.dart';
@@ -91,6 +92,7 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
     await _setUpAnimations();
     await _setUpHitbox();
     current = PlayerState.idle;
+    debugMode = true;
   }
 
   Future<void> _setUpAnimations() async {
@@ -182,6 +184,7 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
     _applyGravity(dt);
     _checkKeyboardInput(dt);
     _applyMovement(dt);
+    _checkIfPlayerCanFall();
   }
 
   @override
@@ -197,16 +200,36 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
     Set<Vector2> intersectionPoints,
     PositionComponent other,
   ) {
-    final playerBottom = position.y + size.y;
-    final intersectionY = intersectionPoints.first.y;
+    // final playerBottom = position.y + size.y;
+    // final intersectionY = intersectionPoints.first.y;
 
-    if (intersectionY >= playerBottom - 5) {
-      // landed on top of block
+    // if (intersectionY >= playerBottom - 5) {
+    //   // landed on top of block
+
+    //   velocity.y = 0;
+
+    //   // Align player on top of block (optional, helps avoid jittering)
+    //   position.y = other.position.y - size.y;
+    //   canFall = false;
+    //   canJump = true;
+    // }
+
+
+
+    final playerBottom = absolutePosition.y + size.y;
+
+    // The intersection point with the highest Y value is the bottom of the player's hitbox.
+    // We sort the intersection points to find the bottom-most point.
+    final sortedPoints = intersectionPoints.toList()..sort((a, b) => a.y.compareTo(b.y));
+    final intersectionPoint = sortedPoints.last;
+
+    // If the player's bottom is at or below the intersection point, it's a top collision.
+    if (playerBottom >= intersectionPoint.y) {
+      // Correctly reposition the player using the intersection point.
+      // The player's top-left corner is moved to just above the intersection point.
+      position.y = intersectionPoint.y - size.y;
 
       velocity.y = 0;
-
-      // Align player on top of block (optional, helps avoid jittering)
-      position.y = other.position.y - size.y;
       canFall = false;
       canJump = true;
     }
@@ -246,7 +269,7 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
 
   void _checkKeyboardInput(double dt) {
     if (_horizontalKeysPressed.isEmpty) {
-      print("empty horizontal keys pressed");
+      // print("empty horizontal keys pressed");
       _stopHorizontalMovement(dt);
     }
     if (_keysPressed.contains(LogicalKeyboardKey.space.keyId)) {
@@ -264,12 +287,12 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
       );
     }
 
-    print("velocity.x = ${velocity.x}");
+    // print("velocity.x = ${velocity.x}");
   }
 
   void _moveHorizontally(int i, bool running, double dt) {
     _running = running;
-    print("isFacingRight = ${isFacingRight}\ni = ${i}\nvelocity.x = ${velocity.x}");
+    // print("isFacingRight = ${isFacingRight}\ni = ${i}\nvelocity.x = ${velocity.x}");
     if (isFacingRight && i < 0 && velocity.x > 0) {
       _stopHorizontalMovement(dt);
       return;
@@ -299,10 +322,10 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
 
   void _debugKeysPressed() {
     if (_keysPressed.isEmpty) {
-      print("no keys are being pressed!");
+      // print("no keys are being pressed!");
     }
     for (int i in _keysPressed) {
-      print("pressing key id = ${i}");
+      // print("pressing key id = ${i}");
     }
   }
   
@@ -338,7 +361,7 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
       flipHorizontallyAroundCenter();
       isFacingRight = !isFacingRight;
     }
-    print("isFacingRight = ${isFacingRight}\ni = ${i}");
+    // print("isFacingRight = ${isFacingRight}\ni = ${i}");
   }
 
   void _jump(dt) {
@@ -362,6 +385,24 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
       current = PlayerState.walk;
     } else {
       current = PlayerState.idle;
+    }
+  }
+
+  _checkIfPlayerCanFall() {
+    double correctCenter = isFacingRight ? size.x / 2 : size.x * -0.5;
+    final footPosition = absolutePosition + Vector2(correctCenter, size.y + 5);
+    final direction = Vector2(0, 1);
+    const maxDistance = 50.0;
+    final ray = Ray2(origin: footPosition, direction: direction);
+    RaycastResult<ShapeHitbox>? outResult = game.collisionDetection.raycast(
+      ray,
+      maxDistance: maxDistance,
+      ignoreHitboxes: descendants().whereType<ShapeHitbox>().toList(),
+    );
+
+    if (outResult == null) {
+      canFall = true;
+      canJump = false;
     }
   }
 }
