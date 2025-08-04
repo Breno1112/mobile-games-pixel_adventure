@@ -4,7 +4,7 @@ import 'package:pixel_adventure/entities/player/player_factory.dart';
 import 'package:pixel_adventure/pixel_adventure.dart';
 import 'package:pixel_adventure/terrain/block_component.dart';
 
-class DefaultWorld extends World with HasGameReference<PixelAdventureGame>, HasCollisionDetection {
+class DefaultWorld extends World with HasGameReference<PixelAdventureGame> {
 
   final String _levelFile;
 

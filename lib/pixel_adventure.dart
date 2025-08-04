@@ -4,7 +4,7 @@ import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:pixel_adventure/worlds/world_factory.dart';
 
-class PixelAdventureGame extends FlameGame with HasKeyboardHandlerComponents {
+class PixelAdventureGame extends FlameGame with HasKeyboardHandlerComponents, HasCollisionDetection {
 
   PixelAdventureGame();
 
