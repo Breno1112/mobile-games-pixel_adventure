@@ -320,14 +320,14 @@ class Player extends SpriteAnimationGroupComponent<PlayerState>
     }
   }
 
-  void _debugKeysPressed() {
-    if (_keysPressed.isEmpty) {
-      // print("no keys are being pressed!");
-    }
-    for (int i in _keysPressed) {
-      // print("pressing key id = ${i}");
-    }
-  }
+  // void _debugKeysPressed() {
+  //   if (_keysPressed.isEmpty) {
+  //     // print("no keys are being pressed!");
+  //   }
+  //   for (int i in _keysPressed) {
+  //     // print("pressing key id = ${i}");
+  //   }
+  // }
   
   void _stopHorizontalMovement(double dt) {
     int direction = 0;
